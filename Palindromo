@@ -1,0 +1,34 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+bool isPalindrome(int x) {
+    // Si el número es negativo o termina en 0o
+    if (x < 0 || (x % 10 == 0 && x != 0)) {
+        return false;
+    }
+
+    int revertedHalf = 0;
+    while (x > revertedHalf) {
+        revertedHalf = revertedHalf * 10 + x % 10;
+        x /= 10;
+    }
+
+    // Si el número tiene una longitud impar
+    return x == revertedHalf || x == revertedHalf / 10;
+}
+
+int main() {
+    int x;
+    
+    printf("Introduce un número: ");
+    scanf("%d", &x);
+
+    // Verificacion de palíndromo
+    if (isPalindrome(x)) {
+        printf("El número %d es un palíndromo.\n", x);
+    } else {
+        printf("El número %d no es un palíndromo.\n", x);
+    }
+
+    return 0;
+}
