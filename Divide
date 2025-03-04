@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
+
+int dividir(int dividendo, int divisor) {
+  
+    if (dividendo == INT_MIN && divisor == -1) return INT_MAX;
+
+    // Determinar el signo del resultado
+    int signo = (dividendo < 0) ^ (divisor < 0) ? -1 : 1;
+
+    long long dvd = llabs(dividendo);
+    long long dvs = llabs(divisor);
+    int resultado = 0;
+
+    // Resta optimizada usando desplazamiento de bits
+    while (dvd >= dvs) {
+        long long temp = dvs, multiplo = 1;
+        while (dvd >= (temp << 1)) {
+            temp <<= 1;
+            multiplo <<= 1;
+        }
+        dvd -= temp;
+        resultado += multiplo;
+    }
+
+    return signo * resultado;
+}
+
+int main() {
+    int dividendo, divisor;
+
+    // Solicitar al usuario los números
+    printf("Ingrese el dividendo: ");
+    scanf("%d", &dividendo);
+
+    printf("Ingrese el divisor: ");
+    scanf("%d", &divisor);
+
+    
+    if (divisor == 0) {
+        printf("Error: No se puede dividir por cero.\n");
+        return 1;
+    }
+
+    // Calcular y mostrar el resultado
+    int resultado = dividir(dividendo, divisor);
+    printf("Resultado: %d\n", resultado);
+
+    return 0;
+}
