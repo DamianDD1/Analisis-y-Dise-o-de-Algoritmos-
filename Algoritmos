@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <string.h>
+
+const char *mapping[] = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+void combinar(char *digitos, int i, char *actual) {
+    if (!digitos[i]) {
+        printf("%s ", actual);
+        return;
+    }
+    for (int j = 0; mapping[digitos[i] - '0'][j]; j++) {
+        actual[i] = mapping[digitos[i] - '0'][j];
+        combinar(digitos, i + 1, actual);
+    }
+}
+
+int main() {
+    char digitos[5], actual[5] = "";
+    printf("Ingresa un número (2-9): ");
+    scanf("%4s", digitos);
+    if (!digitos[0]) return 0;
+    combinar(digitos, 0, actual);
+    return 0;
+}
