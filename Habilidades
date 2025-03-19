@@ -1,0 +1,58 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int compare(const void *a, const void *b) {
+    return ((int)a - (int)b);  //comparación 
+}
+
+int dividePlayers(int* skill, int n) {
+    qsort(skill, n, sizeof(int), compare);  // Ordenamos
+
+    int target_sum = skill[0] + skill[n - 1];  // La suma de la primera y última habilidad
+    int chemistry_sum = 0;
+
+    // Comprobamos si todas las parejas tienen la misma suma
+    for (int i = 0; i < n / 2; i++) {
+        if (skill[i] + skill[n - i - 1] != target_sum) {
+            return -1;  // Si la suma de la pareja no es igual, devolvemos -1
+        }
+        chemistry_sum += skill[i] * skill[n - i - 1];  // Sumamos la química de los equipos
+    }
+
+    return chemistry_sum;  // Retornamos la suma de las químicas
+}
+
+int main() {
+    int n;
+    
+    // Pedimos el número de jugadores
+    printf("Ingrese el número de jugadores (debe ser un número par): ");
+    scanf("%d", &n);
+    
+    // Validacion para que el numero de jugadores sea par 
+    if (n % 2 != 0) {
+        printf("El número de jugadores debe ser par.\n");
+        return 1;  // se cierra el programa si el numero de jugadores no es par
+    }
+
+    int skill[n];  // Arreglo para almacenar las habilidades
+    
+    // Pedimos las habilidades de los jugadores
+    printf("Ingrese las habilidades de los jugadores: \n");
+    for (int i = 0; i < n; i++) {
+        printf("Habilidad del jugador %d: ", i + 1);
+        scanf("%d", &skill[i]);
+    }
+
+    // Llamamos a la función para dividir jugadores en equipos y calcular la química
+    int resultado = dividePlayers(skill, n);
+    
+    // Mostramos el resultado
+    if (resultado == -1) {
+        printf("No se puede dividir a los jugadores en equipos con las mismas habilidades.\n");
+    } else {
+        printf("La suma de las químicas de los equipos es: %d\n", resultado);
+    }
+
+    return 0;
+}
