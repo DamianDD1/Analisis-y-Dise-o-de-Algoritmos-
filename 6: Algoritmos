@@ -1,0 +1,113 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdbool.h>
+
+// Damian Delgadillo
+
+// Función para verificar si un número es primo
+bool es_primo(int n) {
+    if (n <= 1) return false;
+    for (int i = 2; i <= sqrt(n); i++) {
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+
+// Estructura para guardar términos de Fibonacci con sus posiciones originales
+typedef struct {
+    int valor;
+    int posicion;
+} FibTerm;
+
+// Función para comparar términos (orden descendente)
+int comparar(const void *a, const void *b) {
+    FibTerm *termA = (FibTerm *)a;
+    FibTerm *termB = (FibTerm *)b;
+    return termB->valor - termA->valor;
+}
+
+// Generar secuencia de Fibonacci modificada
+FibTerm* generar_fibonacci_modificado(int K, int *tam) {
+    FibTerm *fib = malloc(100 * sizeof(FibTerm)); // Tamaño inicial
+    int capacidad = 100;
+    *tam = 0;
+    
+    // Inicializar primeros términos (posiciones 1 y 2 no primas)
+    fib[(*tam)++] = (FibTerm){0, 1}; // Posición 1 (no prima)
+    fib[(*tam)++] = (FibTerm){1, 2}; // Posición 2 (prima, pero según ejemplo se incluye)
+    
+    int pos = 3;
+    int a = 0, b = 1;
+    
+    while (1) {
+        int siguiente = a + b;
+        if (siguiente > K) break;
+        
+        // Verificar si la posición actual es prima
+        if (!es_primo(pos)) {
+            if (*tam >= capacidad) {
+                capacidad *= 2;
+                fib = realloc(fib, capacidad * sizeof(FibTerm));
+            }
+            fib[(*tam)++] = (FibTerm){siguiente, pos};
+        }
+        
+        a = b;
+        b = siguiente;
+        pos++;
+    }
+    
+    return fib;
+}
+
+// Encontrar términos mínimos no consecutivos
+int encontrar_terminos_minimos(int K, FibTerm *fib_mod, int tam, int *seleccionados) {
+    qsort(fib_mod, tam, sizeof(FibTerm), comparar);
+    
+    int suma = 0;
+    int count = 0;
+    int ultima_pos = -2; // Inicializar con posición imposible
+    
+    for (int i = 0; i < tam && suma < K; i++) {
+        if (suma + fib_mod[i].valor <= K && abs(fib_mod[i].posicion - ultima_pos) > 1) {
+            seleccionados[count++] = fib_mod[i].valor;
+            suma += fib_mod[i].valor;
+            ultima_pos = fib_mod[i].posicion;
+        }
+    }
+    
+    return (suma == K) ? count : 0;
+}
+
+int main() {
+    // Calcular K
+    int dia = 27, mes = 3, ano = 2005;
+    int K = (dia + 100) + (mes + 10) + (ano + 100);
+    printf("K calculado: %d\n", K);
+    
+    // Generar secuencia modificada
+    int tam;
+    FibTerm *fib_mod = generar_fibonacci_modificado(K, &tam);
+    
+    printf("Secuencia modificada: ");
+    for (int i = 0; i < tam; i++) 
+        printf("%d ", fib_mod[i].valor);
+    printf("\n");
+    
+    // Buscar solución
+    int seleccionados[100];
+    int num_terminos = encontrar_terminos_minimos(K, fib_mod, tam, seleccionados);
+    
+    if (num_terminos > 0) {
+        printf("Términos seleccionados: ");
+        for (int i = 0; i < num_terminos; i++) 
+            printf("%d ", seleccionados[i]);
+        printf("\nNúmero mínimo de términos: %d\n", num_terminos);
+    } else {
+        printf("No se encontró solución.\n");
+    }
+    
+    free(fib_mod);
+    return 0;
+}
