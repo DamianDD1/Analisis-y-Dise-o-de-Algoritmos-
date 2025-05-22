@@ -1,0 +1,153 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_CHAR 256
+
+// Nodo del árbol de Huffman
+typedef struct HuffmanNode {
+    char character;
+    int freq;
+    struct HuffmanNode *left, *right;
+} HuffmanNode;
+
+// Cola de prioridad
+typedef struct {
+    HuffmanNode* data[MAX_CHAR];
+    int size;
+} PriorityQueue;
+
+void initQueue(PriorityQueue* pq) {
+    pq->size = 0;
+}
+
+void push(PriorityQueue* pq, HuffmanNode* node) {
+    int i = pq->size++;
+    while (i > 0 && node->freq < pq->data[(i - 1) / 2]->freq) {
+        pq->data[i] = pq->data[(i - 1) / 2];
+        i = (i - 1) / 2;
+    }
+    pq->data[i] = node;
+}
+
+HuffmanNode* pop(PriorityQueue* pq) {
+    int i, child;
+    HuffmanNode* min = pq->data[0];
+    HuffmanNode* temp = pq->data[--pq->size];
+    for (i = 0; i * 2 + 1 < pq->size; i = child) {
+        child = i * 2 + 1;
+        if (child + 1 < pq->size && pq->data[child + 1]->freq < pq->data[child]->freq)
+            child++;
+        if (temp->freq > pq->data[child]->freq)
+            pq->data[i] = pq->data[child];
+        else
+            break;
+    }
+    pq->data[i] = temp;
+    return min;
+}
+
+HuffmanNode* createNode(char character, int freq) {
+    HuffmanNode* node = (HuffmanNode*)malloc(sizeof(HuffmanNode));
+    node->character = character;
+    node->freq = freq;
+    node->left = node->right = NULL;
+    return node;
+}
+
+void buildCodes(HuffmanNode* root, char* code, int depth, char codes[MAX_CHAR][MAX_CHAR]) {
+    if (!root) return;
+    if (!root->left && !root->right) {
+        code[depth] = '\0';
+        strcpy(codes[(unsigned char)root->character], code);
+        return;
+    }
+    code[depth] = '0';
+    buildCodes(root->left, code, depth + 1, codes);
+    code[depth] = '1';
+    buildCodes(root->right, code, depth + 1, codes);
+}
+
+void freeTree(HuffmanNode* root) {
+    if (!root) return;
+    freeTree(root->left);
+    freeTree(root->right);
+    free(root);
+}
+
+int main() {
+    // Texto embebido de más de 50 palabras
+    char texto[] = 
+        "La compresion de datos es un proceso importante en el mundo de la informatica. "
+        "El algoritmo de Huffman permite reducir el tamaño de los archivos de texto sin perder informacion. "
+        "Este metodo se basa en la frecuencia de aparicion de cada simbolo para asignar codigos mas cortos a los mas frecuentes y codigos mas largos a los menos comunes.";
+
+    int freq[MAX_CHAR] = {0};
+    int originalBits = 0;
+    for (int i = 0; texto[i]; i++) {
+        freq[(unsigned char)texto[i]]++;
+        originalBits += 8;
+    }
+
+    // Construir árbol de Huffman
+    PriorityQueue pq;
+    initQueue(&pq);
+    for (int i = 0; i < MAX_CHAR; i++) {
+        if (freq[i]) {
+            push(&pq, createNode(i, freq[i]));
+        }
+    }
+
+    while (pq.size > 1) {
+        HuffmanNode *a = pop(&pq);
+        HuffmanNode *b = pop(&pq);
+        HuffmanNode *merged = createNode('\0', a->freq + b->freq);
+        merged->left = a;
+        merged->right = b;
+        push(&pq, merged);
+    }
+
+    HuffmanNode *root = pop(&pq);
+    char codes[MAX_CHAR][MAX_CHAR] = {{0}};
+    char code[MAX_CHAR];
+    buildCodes(root, code, 0, codes);
+
+    // Codificar el texto
+    FILE *out = fopen("codificado.txt", "w");
+    int encodedBits = 0;
+    for (int i = 0; texto[i]; i++) {
+        fputs(codes[(unsigned char)texto[i]], out);
+        encodedBits += strlen(codes[(unsigned char)texto[i]]);
+    }
+    fclose(out);
+
+    printf("Tamaño original: %d bits\n", originalBits);
+    printf("Tamaño codificado: %d bits\n", encodedBits);
+    printf("Tasa de compresión: %.2f%%\n", 100.0 * (1.0 - (float)encodedBits / originalBits));
+
+    // Decodificar desde archivo codificado.txt
+    FILE *encodedFile = fopen("codificado.txt", "r");
+    if (!encodedFile) {
+        perror("No se pudo abrir codificado.txt");
+        return 1;
+    }
+
+    char encodedText[10000];
+    fscanf(encodedFile, "%s", encodedText);
+    fclose(encodedFile);
+
+    printf("\nTexto decodificado:\n");
+    HuffmanNode *curr = root;
+    for (int i = 0; encodedText[i]; i++) {
+        curr = (encodedText[i] == '0') ? curr->left : curr->right;
+        if (!curr->left && !curr->right) {
+            putchar(curr->character);
+            curr = root;
+        }
+    }
+
+    printf("\n");
+
+    freeTree(root);
+    return 0;
+}
