@@ -1,0 +1,73 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+typedef struct {
+    char nombre[10];
+    int peso;
+    int valor;
+    char simbolo;  // Ej: G, L, S, I
+} Objeto;
+
+int main() {
+    Objeto objetos[] = {
+        {"Guitarra", 1, 1500, 'G'},
+        {"Laptop",   3, 2000, 'L'},
+        {"Estereo",  4, 3000, 'S'},
+        {"iPhone",   1, 2000, 'I'}
+    };
+
+    int n = sizeof(objetos) / sizeof(objetos[0]);
+    int capacidad = 4;
+
+    int dp[n+1][capacidad+1];
+    char seleccion[n+1][capacidad+1][20]; // almacena objetos seleccionados
+
+    // Inicialización
+    for (int i = 0; i <= n; i++) {
+        for (int w = 0; w <= capacidad; w++) {
+            dp[i][w] = 0;
+            strcpy(seleccion[i][w], "");
+        }
+    }
+
+    // Programación dinámica
+    for (int i = 1; i <= n; i++) {
+        for (int w = 0; w <= capacidad; w++) {
+            if (objetos[i-1].peso <= w) {
+                int valor_incluyendo = objetos[i-1].valor + dp[i-1][w - objetos[i-1].peso];
+                int valor_excluyendo = dp[i-1][w];
+                if (valor_incluyendo > valor_excluyendo) {
+                    dp[i][w] = valor_incluyendo;
+                    snprintf(seleccion[i][w], sizeof(seleccion[i][w]), "%s%c",
+                             seleccion[i-1][w - objetos[i-1].peso],
+                             objetos[i-1].simbolo);
+                } else {
+                    dp[i][w] = valor_excluyendo;
+                    strcpy(seleccion[i][w], seleccion[i-1][w]);
+                }
+            } else {
+                dp[i][w] = dp[i-1][w];
+                strcpy(seleccion[i][w], seleccion[i-1][w]);
+            }
+        }
+    }
+
+    // Imprimir tabla estilo imagen
+    printf("Tabla de decisiones estilo imagen:\n\n");
+    printf("        1         2         3         4\n");
+    for (int i = 1; i <= n; i++) {
+        printf("%-8s", objetos[i-1].nombre);
+        for (int w = 1; w <= capacidad; w++) {
+            printf("$%-6d%-3s   ", dp[i][w], seleccion[i][w]);
+        }
+        printf("\n");
+    }
+
+    // Resultado final
+    printf("\nValor máximo: $%d\n", dp[n][capacidad]);
+    printf("Objetos seleccionados: %s\n", seleccion[n][capacidad]);
+
+    return 0;
+}
